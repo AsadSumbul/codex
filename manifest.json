@@ -1,0 +1,23 @@
+{
+  "manifest_version": 3,
+  "name": "Vision Prompt Finder",
+  "version": "0.1.0",
+  "description": "Find images on pages and generate AI prompts via Google Vision API.",
+  "permissions": ["storage", "activeTab", "scripting"],
+  "host_permissions": ["<all_urls>"],
+  "action": {
+    "default_title": "Vision Prompt Finder",
+    "default_popup": "popup.html"
+  },
+  "options_page": "options.html",
+  "background": {
+    "service_worker": "background.js"
+  },
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "js": ["content.js"],
+      "run_at": "document_idle"
+    }
+  ]
+}
