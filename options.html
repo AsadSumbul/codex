@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Vision Prompt Finder Options</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <main class="options">
+      <h1>Google Vision API</h1>
+      <p class="note">
+        Add your API key below. The key is stored in Chrome sync storage and only
+        used to call the Vision API from the extension background service worker.
+      </p>
+      <label for="apiKey">API Key</label>
+      <input type="password" id="apiKey" placeholder="AIza..." />
+      <button id="saveButton" class="primary">Save</button>
+      <p id="saveStatus" class="status" role="status" aria-live="polite"></p>
+    </main>
+    <script src="options.js"></script>
+  </body>
+</html>
