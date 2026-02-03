@@ -1,4 +1,5 @@
-const VISION_ENDPOINT = "https://vision.googleapis.com/v1/images:annotate";
+const GEMINI_ENDPOINT = "https://generativelanguage.googleapis.com/v1beta";
+const GEMINI_MODEL = "models/gemini-1.5-pro:generateContent";
 
 async function getApiKey() {
   const { visionApiKey } = await chrome.storage.sync.get("visionApiKey");
@@ -24,28 +25,18 @@ async function fetchImageBase64(url) {
     throw new Error(`Failed to fetch image: ${response.status}`);
   }
   const blob = await response.blob();
-  return blobToBase64(blob);
+  return { base64: await blobToBase64(blob), mimeType: blob.type || "image/png" };
 }
 
 function buildPromptFromResponse(imageUrl, response) {
-  const annotation = response?.responses?.[0] || {};
-  const labels = (annotation.labelAnnotations || []).slice(0, 6).map((item) => item.description);
-  const webEntities = (annotation.webDetection?.webEntities || [])
-    .slice(0, 4)
-    .map((item) => item.description)
-    .filter(Boolean);
-  const bestGuess = annotation.webDetection?.bestGuessLabels?.[0]?.label;
-
-  const promptParts = [
-    bestGuess,
-    labels.length ? `Labels: ${labels.join(", ")}` : null,
-    webEntities.length ? `Related: ${webEntities.join(", ")}` : null,
-  ].filter(Boolean);
+  const candidate = response?.candidates?.[0];
+  const parts = candidate?.content?.parts || [];
+  const text = parts.map((part) => part.text).filter(Boolean).join("\n");
 
   return {
     imageUrl,
-    prompt: promptParts.join(". ") || "No descriptive data returned.",
-    raw: annotation,
+    prompt: text || "No descriptive data returned.",
+    raw: candidate || {},
   };
 }
 
@@ -55,30 +46,41 @@ async function analyzeImage(url) {
     throw new Error("Missing API key. Set it in the extension options.");
   }
 
-  const base64Content = await fetchImageBase64(url);
+  const { base64, mimeType } = await fetchImageBase64(url);
   const requestBody = {
-    requests: [
+    contents: [
       {
-        image: { content: base64Content },
-        features: [
-          { type: "LABEL_DETECTION", maxResults: 8 },
-          { type: "WEB_DETECTION", maxResults: 6 }
+        parts: [
+          {
+            text:
+              "Describe this image and produce a concise prompt for generative AI. " +
+              "Include subject, style, lighting, composition, and notable details."
+          },
+          {
+            inline_data: {
+              mime_type: mimeType,
+              data: base64
+            }
+          }
         ]
       }
     ]
   };
 
-  const response = await fetch(`${VISION_ENDPOINT}?key=${encodeURIComponent(apiKey)}`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json"
-    },
-    body: JSON.stringify(requestBody)
-  });
+  const response = await fetch(
+    `${GEMINI_ENDPOINT}/${GEMINI_MODEL}?key=${encodeURIComponent(apiKey)}`,
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify(requestBody)
+    }
+  );
 
   if (!response.ok) {
     const errorText = await response.text();
-    throw new Error(`Vision API error: ${response.status} ${errorText}`);
+    throw new Error(`Gemini API error: ${response.status} ${errorText}`);
   }
 
   const data = await response.json();

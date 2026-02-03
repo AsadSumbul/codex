@@ -1,12 +1,12 @@
 {
   "manifest_version": 3,
-  "name": "Vision Prompt Finder",
+  "name": "Gemini Prompt Finder",
   "version": "0.1.0",
-  "description": "Find images on pages and generate AI prompts via Google Vision API.",
+  "description": "Find images on pages and generate AI prompts via Gemini API.",
   "permissions": ["storage", "activeTab", "scripting"],
   "host_permissions": ["<all_urls>"],
   "action": {
-    "default_title": "Vision Prompt Finder",
+    "default_title": "Gemini Prompt Finder",
     "default_popup": "popup.html"
   },
   "options_page": "options.html",
