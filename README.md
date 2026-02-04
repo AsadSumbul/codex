@@ -19,5 +19,5 @@ workflows.
 ## Notes
 - The extension sends each image to Gemini; usage counts against your
   project quota.
-- Images behind auth/CORS restrictions might fail to fetch.
+- Images behind auth/CORS restrictions or unsupported formats (like SVG) might fail to fetch.
 - Results are displayed inside the extension popup.

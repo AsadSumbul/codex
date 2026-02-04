@@ -24,8 +24,18 @@ async function fetchImageBase64(url) {
   if (!response.ok) {
     throw new Error(`Failed to fetch image: ${response.status}`);
   }
+  const contentType = response.headers.get("content-type") || "";
+  if (!contentType.startsWith("image/")) {
+    throw new Error(`Unsupported content type: ${contentType || "unknown"}`);
+  }
+  if (contentType.includes("svg")) {
+    throw new Error("Unsupported image type: SVG");
+  }
   const blob = await response.blob();
-  return { base64: await blobToBase64(blob), mimeType: blob.type || "image/png" };
+  return {
+    base64: await blobToBase64(blob),
+    mimeType: contentType || blob.type || "image/png"
+  };
 }
 
 function buildPromptFromResponse(imageUrl, response) {
@@ -94,8 +104,16 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       try {
         const results = [];
         for (const url of imageUrls) {
-          const result = await analyzeImage(url);
-          results.push(result);
+          try {
+            const result = await analyzeImage(url);
+            results.push(result);
+          } catch (error) {
+            results.push({
+              imageUrl: url,
+              prompt: `Error: ${error.message}`,
+              raw: {}
+            });
+          }
         }
         sendResponse({ ok: true, results });
       } catch (error) {
